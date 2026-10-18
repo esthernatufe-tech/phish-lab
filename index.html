@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Esther Natufe's Phish Lab – Phishing Simulator</title>
+<style>
+:root{--bg:#f4f6f9;--panel:#fff;--ink:#1c2430;--mute:#667085;--line:#e3e8ef;--brand:#2457d6;--bad:#c62828;--badbg:#fdecec;--ok:#1b7f3b;--okbg:#e8f6ec;--warn:#9a6700;--warnbg:#fff4d6}
+@media(prefers-color-scheme:dark){:root{--bg:#10141a;--panel:#171c24;--ink:#e6eaf0;--mute:#97a1b0;--line:#2a323d;--brand:#6c93ff;--bad:#ff7b7b;--badbg:#3a1b1b;--ok:#6fd48c;--okbg:#17321f;--warn:#f0c35a;--warnbg:#3a2f12}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:17px;margin:0;margin-right:auto}
+header h1 small{color:var(--mute);font-weight:400;margin-left:8px}
+.tabs button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+.tabs button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.good{background:var(--ok);color:#fff;border-color:var(--ok)}
+.score{color:var(--mute);font-size:14px}
+main{flex:1;display:flex;min-height:0}
+#list{width:360px;max-width:42%;overflow:auto;border-right:1px solid var(--line);background:var(--panel)}
+.item{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;position:relative}
+.item:hover{background:var(--bg)}
+.item.sel{background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.item .f{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .a{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t{position:absolute;right:12px;top:10px;font-size:12px;color:var(--mute)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;margin-top:3px}
+.tag.right{background:var(--okbg);color:var(--ok)}.tag.wrong{background:var(--badbg);color:var(--bad)}
+#read{flex:1;overflow:auto;padding:20px;position:relative}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:820px;margin:0 auto 16px}
+.mh h2{margin:0 0 10px;font-size:20px}
+.row{display:flex;gap:8px;font-size:14px;margin:2px 0;flex-wrap:wrap}.row b{color:var(--mute);min-width:64px;font-weight:500}
+.addr{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 6px;border-radius:6px}
+.mbody{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.mbody blockquote{margin:12px 0;padding:6px 12px;border-left:3px solid var(--line);color:var(--mute);font-size:14px}
+a.lnk{color:var(--brand);text-decoration:underline;cursor:pointer}
+.att{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:4px 8px 4px 0;cursor:pointer;background:var(--bg)}
+.att:hover{border-color:var(--brand)}.att .ic{font-size:22px}.att small{display:block;color:var(--mute)}
+.qr{display:inline-block;padding:10px;background:#fff;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.btnbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.hdrs{display:none;margin-top:10px;font:12.5px/1.6 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:10px;border-radius:8px;overflow:auto;white-space:pre-wrap}
+.hdrs.open{display:block}
+.verdict{border-radius:12px;padding:16px;max-width:820px;margin:0 auto 16px}
+.verdict.right{background:var(--okbg);border:1px solid var(--ok)}.verdict.wrong{background:var(--badbg);border:1px solid var(--bad)}
+.verdict h3{margin:0 0 6px}.verdict ul{margin:6px 0 0;padding-left:20px}
+#status{position:fixed;left:0;bottom:0;max-width:75%;background:#222;color:#fff;font:12.5px ui-monospace,Menlo,Consolas,monospace;padding:4px 10px;border-top-right-radius:8px;display:none;z-index:50;word-break:break-all}
+.empty{color:var(--mute);text-align:center;margin-top:20vh}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal .box{background:var(--panel);border-radius:14px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:22px}
+.modal h3{margin:0 0 10px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:14px;margin:10px 0}.kv div:nth-child(odd){color:var(--mute)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
+mark.nx{background:#ffd54a;color:#000;border-radius:3px;padding:0 2px}
+.dim{color:var(--mute)}.dom{font-weight:700;color:var(--brand)}
+.note{border-radius:8px;padding:10px 12px;font-size:14px;margin:10px 0}.note.warn{background:var(--warnbg);color:var(--warn)}.note.info{background:var(--bg)}
+.learn{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;max-width:1000px;margin:0 auto}
+.learn .card{margin:0}.learn h3{margin:0 0 6px;font-size:16px}.learn p{margin:6px 0;font-size:14px}
+#ransom{position:fixed;inset:0;background:#120000;color:#ff4d4d;z-index:200;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;padding:0 0 40px}
+#ransom .sim{background:#ffd54a;color:#000;text-align:center;padding:8px;font-weight:700;font-family:system-ui}
+#ransom .in{max-width:760px;margin:30px auto;padding:0 16px}
+#ransom h1{font-size:26px;margin:0 0 12px}
+#ransom .files{background:#1c0000;border:1px solid #5a0000;padding:10px;max-height:190px;overflow:auto;font-size:13px;color:#ff9b9b}
+#ransom .timer{font-size:34px;margin:12px 0;color:#fff}
+#ransom .debrief{font-family:system-ui;color:#f1f1f1;background:#1d1d1d;border-radius:12px;padding:20px;margin-top:20px}
+#ransom .debrief h2{margin-top:0}
+@media(max-width:760px){main{flex-direction:column}#list{width:100%;max-width:none;max-height:38vh;border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎣 Esther Natufe's Phish Lab <small>Social-engineering simulator</small></h1>
+  <div class="tabs"><button id="tInbox" class="on">Inbox</button><button id="tLearn">Learn</button></div>
+  <span class="score" id="score"></span>
+  <button class="btn" id="bResults">Results</button>
+  <button class="btn" id="bReset">Reset</button>
+</header>
+<main id="mainInbox">
+  <div id="list"></div>
+  <div id="read"><div class="empty">Select an email.<br><small>Check the sender, hover or click links, and click attachments to inspect them.<br>Then decide: phishing or legitimate?</small></div></div>
+</main>
+<main id="mainLearn" style="display:none;overflow:auto;padding:20px"><div class="learn" id="learn"></div></main>
+<div id="status"></div>
+
+<script>
+/* ---------------- Simulation notice ----------------
+   Everything here is fictional. Brands (Zentra Bank, Cloudvault, Parcelo, Lumen HR, Paystream) are made up.
+   No emails are sent, nothing is stored, no real files are touched. */
+
+// Optional: put an organizer address here (e.g. "esther@example.com") to prefill the "send results" email.
+const ORGANIZER_EMAIL = "";
+const ME = {name:"Alex Morgan", addr:"alex.morgan@brightfield.com"};
+const L = (u,t)=>`<a href="#" class="lnk" data-url="${u}">${t}</a>`;
+const C = "\u0430"; // Cyrillic small a – looks identical to Latin 'a'
+
+const emails = [
+{id:1, from:"Lumen HR", addr:"no-reply@lumenhr.com", ret:"bounce@lumenhr.com", time:"Mon 08:12",
+ subject:"Reminder: open enrollment closes October 31",
+ spf:"pass", dkim:"pass (lumenhr.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p>Hi Alex,</p><p>This is a reminder that benefits open enrollment for Brightfield Ltd closes on <b>October 31</b>. You can review or change your selections in the Lumen HR portal.</p><p>${L("https://app.lumenhr.com/brightfield/benefits","Open benefits portal")}</p><p>If you have questions, reply to the HR team or visit the portal help centre.</p><p>— Lumen HR on behalf of Brightfield People Team</p>`,
+ flags:["Sender domain (lumenhr.com), link domain (app.lumenhr.com) and the vendor your company uses all match.","The deadline is realistic and there is no threat of account loss.","Even so, the safest habit is to type the portal address yourself or use your bookmark."]},
+
+{id:2, from:"Zentra Bank Security", addr:`security@zentr${C}bank.com`, ret:`bounce@zentr${C}bank.com`, time:"Mon 09:03",
+ subject:"Unusual sign-in blocked – confirm it was you",
+ spf:"pass", dkim:`pass (zentr${C}bank.com)`, dmarc:"pass", phish:true, tech:"Homoglyph domain",
+ body:`<p>Dear customer,</p><p>We blocked a sign-in to your Zentra Bank account from a new device (Lagos, NG – Chrome on Windows).</p><p>If this was not you, review the activity within 24 hours to keep your account active.</p><p>${L(`https://zentr${C}bank.com/secure/verify`,"Review account activity")}</p><p>Zentra Bank Security Team</p>`,
+ flags:[`The domain uses a <b>Cyrillic “а” (U+0430)</b> instead of a Latin “a”. It looks identical but is a completely different domain – use “Inspect sender” to see it flagged.`,"SPF/DKIM/DMARC all pass because the attacker owns the lookalike domain. Passing authentication only proves the domain is real, not that it is the one you expect.","Generic greeting, 24-hour pressure, and a link to “verify”."]},
+
+{id:3, from:"Daniel Okoro", addr:"daniel.okoro@brightfield-corp.com", ret:"daniel.okoro@brightfield-corp.com", time:"Mon 10:41",
+ subject:"Kestrel review – slides for Thursday",
+ spf:"pass", dkim:"pass (brightfield-corp.com)", dmarc:"pass", phish:true, tech:"AI-generated spear phishing",
+ body:`<p>Hi Alex,</p><p>Thanks for jumping on the call about the Kestrel Logistics renewal last week. I tightened the pricing section as you suggested and added the Q3 delivery-delay numbers Priya flagged. I'd love your eyes on it before Thursday's vendor review at 2pm.</p><p>Deck is here (14 MB, so I used a share link): ${L("https://cloudvault-share.co/f/Kestrel-Q4-Review","Kestrel_Q4_Review.pptx")}</p><p>If it asks you to sign in to view, just use your work email – it's the same SSO flow as last time. Shout if anything looks off!</p><p>Cheers,<br>Daniel</p>`,
+ flags:["Flawless, natural writing with real names, a real-sounding meeting and project details. AI makes personalised lures cheap, so <b>good grammar is no longer a signal of safety</b>.","The sender domain is <b>brightfield-corp.com</b>, not <b>brightfield.com</b>. Your colleague’s name appears, but the domain is not yours.","The file link goes to an unfamiliar host (cloudvault-share.co), not the sharing service your company uses.","“Just use your work email, same SSO as last time” pre-empts your suspicion about a login page."]},
+
+{id:4, from:"Cloudvault", addr:"no-reply@cloudvault.com", ret:"bounce@mail.cloudvault.com", time:"Mon 11:20",
+ subject:"Priya Nair shared “Q4 Budget.xlsx” with you",
+ spf:"pass", dkim:"pass (cloudvault.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p><b>Priya Nair</b> (priya.nair@brightfield.com) shared a file with you.</p><p>${L("https://cloudvault.com/s/8fKd2Lq9","Open “Q4 Budget.xlsx”")}</p><p class="dim">You received this because Priya shared a file with alex.morgan@brightfield.com. © Cloudvault</p>`,
+ flags:["Sender, return-path (mail.cloudvault.com) and link all sit under the real cloudvault.com domain.","The sharer’s address is on your company’s real domain and the file matches work you expect (the Q4 budget).","Unexpected shares are still worth confirming with the sender in a separate channel."]},
+
+{id:5, from:"Parcelo Billing", addr:"billing@parcelo-express.com", ret:"billing@parcelo-express.com", time:"Mon 13:05",
+ subject:"Invoice #88231 overdue – action required",
+ spf:"pass", dkim:"pass (parcelo-express.com)", dmarc:"none", phish:true, tech:"Double-extension malware", attack:"exe",
+ atts:[{name:"Invoice_88231.pdf.exe", size:"612 KB"}],
+ body:`<p>Hello,</p><p>Our records show invoice <b>#88231</b> for your recent shipment is overdue. Please open the attached invoice and arrange payment today to avoid a late fee.</p><p>Regards,<br>Accounts Receivable<br>Parcelo Express</p>`,
+ flags:["The file is <b>Invoice_88231.pdf.exe</b>. The real extension is the <b>last</b> one: .exe is a program. Windows hides known extensions by default, so you’d see “Invoice_88231.pdf”.","The real courier’s domain is parcelo.com; this is parcelo-express.com. Invoices are never sent as executables.","You didn’t expect an invoice, and the email creates payment pressure."]},
+
+{id:6, from:"Lumen Payroll", addr:"payroll@lumenhr-payroll.net", ret:"payroll@lumenhr-payroll.net", time:"Tue 08:47",
+ subject:"Updated Q4 payroll adjustments – please review before Friday",
+ spf:"pass", dkim:"pass (lumenhr-payroll.net)", dmarc:"pass", phish:true, tech:"Macro malware / ransomware delivery", attack:"ransomware",
+ atts:[{name:"Payroll_Adjustments_Q4.xlsm", size:"238 KB"}],
+ body:`<p>Hi Alex,</p><p>Following the recent tax-table update, your Q4 payroll figures have been adjusted. Please review the attached workbook before Friday's payroll run.</p><p>The figures are protected for privacy. When Excel opens the file, click <b>“Enable Content”</b> / <b>“Enable Editing”</b> to view them.</p><p>Thank you,<br>Payroll Operations</p>`,
+ flags:["The file is <b>.xlsm</b>, a macro-enabled workbook that can run code the moment you click “Enable Content”. This is a classic ransomware delivery method.","Real payroll data is sent through the HR portal, not as a workbook with “protected figures”.","The domain lumenhr-payroll.net is not the vendor’s real domain (lumenhr.com).","Instructing you to enable macros is the tell. Legitimate files never need it to display a table."]},
+
+{id:7, from:"Zentra Bank Support", addr:"zentra.support1928@gmail.com", ret:"zentra.support1928@gmail.com", time:"Tue 10:15",
+ subject:"Your account has been limited",
+ spf:"pass", dkim:"pass (gmail.com)", dmarc:"pass", phish:true, tech:"Display-name spoofing",
+ body:`<p>Dear valued customer,</p><p>Your Zentra Bank account has been limited due to unusual activity. To restore full access, please confirm your identity.</p><p>${L("https://zentrabank-restore.help/login","Restore access now")}</p><p>Zentra Bank Support</p>`,
+ flags:["The display name says “Zentra Bank Support” but the actual address is a free <b>Gmail</b> account. Many mail apps only show the display name.","Banks don’t contact customers from free webmail addresses.","The link goes to zentrabank-restore.help, not the bank’s domain."]},
+
+{id:8, from:"Cloudvault", addr:"storage@cloudvault-notices.com", ret:"storage@cloudvault-notices.com", time:"Tue 12:30",
+ subject:"Your storage is 98% full – uploads will stop",
+ spf:"pass", dkim:"pass (cloudvault-notices.com)", dmarc:"pass", phish:true, tech:"Subdomain trick",
+ body:`<p>Hi Alex,</p><p>Your Cloudvault storage is almost full. New uploads and file syncs will be paused unless you upgrade or free space.</p><p>${L("https://cloudvault.com.account-verify.net/upgrade","Manage storage at cloudvault.com")}</p><p>Cloudvault Team</p>`,
+ flags:["Read the link domain from <b>right to left</b> before the first single slash: the real domain is <b>account-verify.net</b>. “cloudvault.com” is just a subdomain the attacker chose.","The link text claims one place while the actual destination is another.","The sender domain (cloudvault-notices.com) isn’t Cloudvault’s real domain either."]},
+
+{id:9, from:"Adaeze Bello (CEO)", addr:"adaeze.bello@brightfie1d.com", ret:"adaeze.bello@brightfie1d.com", replyto:"adaeze.bello.ceo@proton.me", time:"Tue 15:02",
+ subject:"Quick favour – are you at your desk?",
+ spf:"pass", dkim:"pass (brightfie1d.com)", dmarc:"none", phish:true, tech:"CEO fraud / BEC",
+ body:`<p>Alex,</p><p>I'm heading into a board session and can't take calls. I need you to process a payment today to a new supplier – <b>₦4,850,000</b>. It's time-sensitive and confidential for now, so please don't loop in finance until it's done.</p><p>Reply here and I'll send the account details. I'll be checking email between sessions.</p><p>Adaeze<br><span class="dim">Sent from my phone</span></p>`,
+ flags:["The sender domain is <b>brightfie1d.com</b> – a numeral “1” replaces the “l” in brightfield.","The <b>Reply-To</b> header points to a different address (a free Proton mail). Replies would go to the attacker – check the headers.","Urgency, secrecy, authority and “don’t involve finance” are the classic business-email-compromise pattern.","Always verify payment requests by calling the person on a known number."]},
+
+{id:10, from:"Brightfield IT Security", addr:"it-security@brightfield-helpdesk.com", ret:"it-security@brightfield-helpdesk.com", time:"Wed 09:10",
+ subject:"Action required: re-register MFA by Friday",
+ spf:"pass", dkim:"pass (brightfield-helpdesk.com)", dmarc:"pass", phish:true, tech:"QR-code phishing (quishing)", qr:"https://brightfield-mfa-setup.com/r?t=a91f3c",
+ body:`<p>Hi Alex,</p><p>As part of our identity upgrade, all staff must re-register their authenticator app by <b>Friday</b>. Accounts not re-registered will be locked.</p><p>Scan the QR code below with your phone camera to start. (Scanning on mobile is required for security.)</p>{{QR}}<p>IT Security Team</p>`,
+ flags:["QR codes hide the destination from you <i>and</i> from email security filters, and push you onto your personal phone where protections are weaker.","The sender domain isn’t your company’s (brightfield.com) and the destination is another unfamiliar domain.","Real MFA changes happen inside the official portal you reach by yourself, not through a QR code in an email."]},
+
+{id:11, from:"Parcelo Express", addr:"notifications@parcelo.com", ret:"bounce@parcelo.com", time:"Wed 11:45",
+ subject:"Your parcel is out for delivery today",
+ spf:"pass", dkim:"pass (parcelo.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p>Hi Alex,</p><p>Your parcel <b>PX48829103</b> is out for delivery and should arrive between 1pm and 5pm today.</p><p>${L("https://www.parcelo.com/track/PX48829103","Track your parcel")}</p><p class="dim">You're receiving this because you ordered an item shipped with Parcelo Express.</p>`,
+ flags:["The sender and link both use the real parcelo.com domain.","It asks for nothing – no payment, password or personal details – just a tracking link.","If you weren’t expecting a parcel, go to the courier’s website directly rather than clicking."]},
+
+{id:12, from:"Tunde Adeyemi (Paystream)", addr:"accounts@paystream-lnc.com", ret:"accounts@paystream-lnc.com", time:"Wed 14:20",
+ subject:"Re: Re: Invoice PS-2291 – updated bank details",
+ spf:"pass", dkim:"pass (paystream-lnc.com)", dmarc:"none", phish:true, tech:"Thread hijack + lookalike domain",
+ body:`<p>Hi Alex,</p><p>Apologies for the confusion on the last invoice. We have switched banks, so please use the new account below for PS-2291 and future payments. Kindly confirm once the transfer is scheduled.</p><p><b>Bank:</b> Meridian Commercial<br><b>Account:</b> 0192 77 4410</p><p>Thanks,<br>Tunde</p><blockquote><b>From:</b> accounts@paystreaminc.com<br><b>Subject:</b> Invoice PS-2291<br>Hi Alex, please find invoice PS-2291 attached, due in 14 days. Payment to the account on file.</blockquote>`,
+ flags:["It replies into a genuine-looking thread, but the quoted earlier message came from <b>paystreaminc.com</b> while this one comes from <b>paystream-lnc.com</b> (“lnc” instead of “inc”).","Bank-detail changes are a top fraud trigger. Always confirm by phoning the vendor on a number you already hold.","The attacker likely read the real thread, so the context feels authentic."]},
+
+{id:13, from:"Brightfield IT Helpdesk", addr:"helpdesk@brightfield.com", ret:"helpdesk@brightfield.com", time:"Thu 08:00",
+ subject:"Scheduled maintenance: Saturday 02:00–04:00",
+ spf:"pass", dkim:"pass (brightfield.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p>Hi all,</p><p>The VPN and email gateway will be briefly unavailable on <b>Saturday between 02:00 and 04:00</b> for routine maintenance. No action is needed from you.</p><p>If you have trouble connecting afterwards, contact the helpdesk through the intranet or call the extension on the back of your staff badge. We will never ask for your password by email.</p><p>— IT Helpdesk</p>`,
+ flags:["It comes from your real company domain, requires no action, and contains no links or attachments.","It tells you how to reach IT through channels you already know, which is the right pattern."]},
+
+{id:14, from:"Priya Nair", addr:"priya.nair@brightfield.com", ret:"priya.nair@brightfield.com", time:"Thu 09:30",
+ subject:"Invitation: Sprint planning – Tue 10:00",
+ spf:"pass", dkim:"pass (brightfield.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ atts:[{name:"invite.ics", size:"2 KB"}],
+ body:`<p>Hi Alex,</p><p>Sprint planning is on Tuesday at 10:00 in the usual meeting room. Join remotely here: ${L("https://meet.brightfield.com/sprint-planning","meet.brightfield.com/sprint-planning")}</p><p>Calendar invite attached. See you there!<br>Priya</p>`,
+ flags:["Real internal sender, a company-owned link, and an .ics calendar file (plain text, not executable).","It matches a meeting you would expect and asks for nothing sensitive."]},
+
+{id:15, from:"Zentra Bank", addr:"statements@zentrabnk.com", ret:"statements@zentrabnk.com", time:"Thu 11:05",
+ subject:"Your October e-statement is ready",
+ spf:"pass", dkim:"pass (zentrabnk.com)", dmarc:"pass", phish:true, tech:"Typosquat (missing letter)",
+ body:`<p>Hello Alex,</p><p>Your October e-statement for your Zentra Bank current account is now available.</p><p>For your security, please sign in to view it:</p><p>${L("https://zentrabnk.com/statements/oct","View my statement")}</p><p>Thank you for banking with Zentra Bank.</p>`,
+ flags:["The domain is <b>zentrabnk.com</b>: the “a” in “bank” is missing. This is classic typosquatting, which relies on people reading the shape of a word rather than every letter.","The email, headers and link all agree with each other, which makes it feel consistent. They agree on the wrong domain.","Statement emails don’t need you to “sign in” through the message itself. Go to the bank’s site via your bookmark or app."]},
+
+{id:16, from:"Cloudvault", addr:"no-reply@cloudvualt.com", ret:"bounce@cloudvualt.com", time:"Thu 12:40",
+ subject:"Your password was changed",
+ spf:"pass", dkim:"pass (cloudvualt.com)", dmarc:"pass", phish:true, tech:"Typosquat (transposed letters)",
+ body:`<p>Hi Alex,</p><p>The password for your Cloudvault account was changed a few minutes ago from a new device.</p><p>If this wasn't you, secure your account right away:</p><p>${L("https://cloudvualt.com/secure","Secure my account")}</p><p class="dim">© Cloudvault. All rights reserved.</p>`,
+ flags:["<b>cloudvualt.com</b> swaps two letters of “cloudvault”: “vault” becomes “vualt”. Transposed letters are among the hardest typos to spot.","Fear-based trigger: “if this wasn’t you”. It pushes you to click before thinking.","Instead of the link, open Cloudvault from your bookmark and check your account activity there."]},
+
+{id:17, from:"Lumen HR", addr:"benefits@lumenhr.net", ret:"benefits@lumenhr.net", time:"Fri 08:25",
+ subject:"Action needed: confirm your dependants' details",
+ spf:"pass", dkim:"pass (lumenhr.net)", dmarc:"pass", phish:true, tech:"Typosquat (wrong TLD)",
+ body:`<p>Hi Alex,</p><p>As part of benefits open enrollment, we need you to confirm your dependants' details by <b>end of day Monday</b>, otherwise coverage may lapse.</p><p>${L("https://lumenhr.net/brightfield/dependants","Confirm dependants")}</p><p>Thank you,<br>Lumen HR on behalf of Brightfield People Team</p>`,
+ flags:["The name is exactly right but the ending is <b>.net</b>, not <b>.com</b>. The real vendor is lumenhr.com. The wrong top-level domain is the whole trick.","It copies the tone and wording of a genuine HR notice (compare with the legitimate enrollment reminder), so familiarity lowers your guard.","The threat of lapsed coverage creates urgency around personal data."]},
+
+{id:18, from:"Parcelo Express", addr:"delivery@parceloo.com", ret:"delivery@parceloo.com", time:"Fri 10:50",
+ subject:"Delivery attempt failed – reschedule now",
+ spf:"pass", dkim:"pass (parceloo.com)", dmarc:"none", phish:true, tech:"Typosquat (doubled letter)",
+ body:`<p>Hi Alex,</p><p>We tried to deliver your parcel today but nobody was available. Your parcel will be returned to the sender in 48 hours unless you reschedule.</p><p>A small redelivery fee of <b>₦350</b> applies.</p><p>${L("https://parceloo.com/reschedule","Reschedule delivery")}</p><p>Parcelo Express</p>`,
+ flags:["<b>parceloo.com</b> has a doubled “o”. Double letters are easy to read straight over.","Small fee plus a deadline is a common way to harvest card details.","A real delivery failure notice doesn’t charge fees by link. Check tracking on the courier’s own site."]},
+
+{id:19, from:"Zentra Bank", addr:"alerts@zentrabank.com", ret:"bounce@zentrabank.com", time:"Fri 14:10",
+ subject:"Your monthly statement is available",
+ spf:"pass", dkim:"pass (zentrabank.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p>Hello Alex,</p><p>Your latest Zentra Bank statement is ready. You can view it in the Zentra Bank app or on our website.</p><p>${L("https://www.zentrabank.com/statements","Go to statements")}</p><p class="dim">Zentra Bank will never ask for your PIN, password or one-time code by email, phone or text.</p>`,
+ flags:["Sender, return-path and link are all on the real <b>zentrabank.com</b>. Compare it letter by letter with the typosquat version.","It asks for nothing sensitive and reminds you of the bank’s own rules.","It also points you to the app, a channel you control."]},
+
+{id:20, from:"Cloudvault Security", addr:"security@cloudvault.com", ret:"bounce@mail.cloudvault.com", time:"Fri 15:30",
+ subject:"New sign-in to your Cloudvault account",
+ spf:"pass", dkim:"pass (cloudvault.com)", dmarc:"pass", phish:false, tech:"Legitimate",
+ body:`<p>Hi Alex,</p><p>We noticed a new sign-in to your account from Chrome on Windows. If this was you, no action is needed.</p><p>If it wasn't you, review your recent activity: ${L("https://cloudvault.com/security/activity","cloudvault.com/security/activity")}</p><p class="dim">Tip: you can also open Cloudvault directly and go to Settings → Security.</p>`,
+ flags:["Real <b>cloudvault.com</b> domain throughout, with a clear “no action needed” path.","The link text matches the actual destination, and the email suggests going to the app directly.","A security alert is not suspicious by itself; what matters is where the link goes."]}
+];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hl=s=>[...s].map(ch=>ch.codePointAt(0)>127?`<mark class="nx" title="U+${ch.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')}">${esc(ch)}</mark>`:esc(ch)).join('');
+const nonAscii=s=>[...s].filter(c=>c.codePointAt(0)>127).map(c=>`“${c}” (U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')})`);
+const ftype={exe:"Windows executable program – runs code",xlsm:"Excel macro-enabled workbook – can run code",docm:"Word macro-enabled document – can run code",js:"JavaScript file – runs code",scr:"Screensaver executable – runs code",ics:"Calendar invite – plain text",pdf:"PDF document",xlsx:"Excel workbook (no macros)",docx:"Word document (no macros)",pptx:"PowerPoint presentation"};
+const state={answers:{},sel:null,risky:{}};
+
+/* ---------- list & reading pane ---------- */
+function renderList(){
+  $('#list').innerHTML=emails.map(e=>{
+    const a=state.answers[e.id];
+    return `<div class="item ${state.sel===e.id?'sel':''}" data-id="${e.id}"><span class="t">${e.time}</span>
+      <div class="f">${esc(e.from)}</div><div class="a">&lt;${esc(e.addr)}&gt;</div><div class="s">${esc(e.subject)}${e.atts?' 📎':''}</div>
+      ${a?`<span class="tag ${a.right?'right':'wrong'}">${a.right?'Correct':'Missed'}</span>`:''}</div>`}).join('');
+  const done=Object.keys(state.answers).length,ok=Object.values(state.answers).filter(a=>a.right).length;
+  $('#score').textContent=`${done}/${emails.length} answered · ${ok} correct`;
+}
+function qrSvg(){ // decorative, not scannable
+  let s='',n=21,u=6;
+  const f=(x,y)=>(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    let on=f(x,y)?!((x%6!==0&&x%6!==6)&&false)&&(x===0||y===0||x===6||y===6||x===14||x===20||y===14||y===20||(x>1&&x<5&&y>1&&y<5&&x<7)||(x>15&&x<19&&y>1&&y<5)||(x>1&&x<5&&y>15&&y<19)):((x*7+y*13+x*y)%3===0);
+    if(on)s+=`<rect x="${x*u}" y="${y*u}" width="${u}" height="${u}"/>`;}
+  return `<svg width="${n*u}" height="${n*u}" viewBox="0 0 ${n*u} ${n*u}" fill="#000">${s}</svg>`;
+}
+function open(id){
+  state.sel=id;const e=emails.find(x=>x.id===id),a=state.answers[id];
+  const attHtml=(e.atts||[]).map((t,i)=>`<div class="att" data-att="${i}"><span class="ic">${/exe|xlsm|docm|scr|js/.test(t.name.split('.').pop())?'⚙️':'📄'}</span><div><b>${esc(t.name)}</b><small>${t.size} · click to inspect</small></div></div>`).join('');
+  let body=e.body.replace('{{QR}}',`<p><span class="qr" data-qr="1" title="Click to inspect where this leads">${qrSvg()}</span><br><small class="dim">Click the code to see where it leads (simulates scanning).</small></p>`);
+  let html=`<div class="card"><div class="mh"><h2>${esc(e.subject)}</h2>
+   <div class="row"><b>From</b><span>${esc(e.from)} <span class="addr">&lt;${esc(e.addr)}&gt;</span></span></div>
+   <div class="row"><b>To</b><span>${ME.name} <span class="addr">&lt;${ME.addr}&gt;</span></span></div>
+   ${e.replyto?`<div class="row"><b>Reply-To</b><span class="addr">${esc(e.replyto)}</span></div>`:''}
+   <div class="row"><b>Date</b><span>${e.time}</span></div>
+   <div class="tools"><button class="btn" id="bSender">🔍 Inspect sender</button><button class="btn" id="bHdr">📜 View headers</button></div>
+   <div class="hdrs" id="hdrs">From: ${esc(e.from)} &lt;${esc(e.addr)}&gt;
+Reply-To: ${esc(e.replyto||e.addr)}
+Return-Path: &lt;${esc(e.ret)}&gt;
+To: ${ME.addr}
+Authentication-Results: spf=${e.spf}; dkim=${esc(e.dkim)}; dmarc=${e.dmarc}</div></div>
+   ${attHtml?`<div style="margin-top:12px">${attHtml}</div>`:''}
+   <div class="mbody">${body}</div></div>`;
+  if(!a) html+=`<div class="card"><b>Your call:</b><div class="btnbar"><button class="btn danger" id="bPhish">🚩 Report as phishing</button><button class="btn good" id="bSafe">✅ Looks legitimate</button></div></div>`;
+  else html+=verdict(e,a);
+  $('#read').innerHTML=html;$('#read').scrollTop=0;renderList();
+}
+function verdict(e,a){
+  const note=state.risky[e.id]?`<p><b>⚠️ You also interacted with a dangerous element in this email (${state.risky[e.id]}). In real life that could have compromised you.</b></p>`:'';
+  return `<div class="verdict ${a.right?'right':'wrong'}"><h3>${a.right?'✅ Correct':'❌ Not quite'} – this email is ${e.phish?'<u>phishing</u>':'<u>legitimate</u>'} <small>(${esc(e.tech)})</small></h3>${note}<b>${e.phish?'Red flags:':'Why it’s safe:'}</b><ul>${e.flags.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
+}
+function answer(id,says){
+  const e=emails.find(x=>x.id===id);state.answers[id]={says,right:says===e.phish};open(id);
+  if(Object.keys(state.answers).length===emails.length)setTimeout(results,400);
+}
+
+/* ---------- inspectors ---------- */
+function modal(inner){const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="box">${inner}</div>`;m.addEventListener('click',ev=>{if(ev.target===m||ev.target.dataset.close)m.remove()});document.body.appendChild(m);return m}
+function linkInspector(url,fromQR){
+  const e=emails.find(x=>x.id===state.sel);let u;try{u=new URL(url)}catch{return}
+  const parts=u.hostname.split('.'),reg=parts.slice(-2).join('.'),sub=parts.slice(0,-2).join('.');
+  const nx=nonAscii(u.hostname);
+  const m=modal(`<h3>🔗 Link inspector</h3><div class="note info">${fromQR?'This is where the QR code would take you.':'This is the exact address behind the link text.'} Nothing has been opened.</div>
+   <div class="kv"><div>Full URL</div><div class="mono">${hl(url)}</div><div>Protocol</div><div>${u.protocol}</div>
+   <div>Host</div><div class="mono">${sub?`<span class="dim">${hl(sub)}.</span>`:''}<span class="dom">${hl(reg)}</span></div>
+   <div>Registered domain</div><div class="mono dom">${hl(reg)}</div><div>Path</div><div class="mono">${esc(u.pathname+u.search)}</div></div>
+   ${nx.length?`<div class="note warn">Non-ASCII characters in host: ${nx.join(', ')}</div>`:''}
+   <div class="btnbar"><button class="btn" data-close="1">Close – don't open</button><button class="btn danger" id="go">Open anyway (simulated)</button></div>`);
+  m.querySelector('#go').onclick=()=>{m.remove();if(e.phish){state.risky[e.id]=fromQR?'scanned QR':'clicked link';modal(`<h3>⚠️ Simulation: you opened it</h3><p>In a real attack you would now land on a pixel-perfect fake login page, and anything you typed would go straight to the attacker. <b>Nothing was sent here. This is a safe simulation.</b></p><p>Tip: close the tab, don’t enter credentials, and report the email.</p><div class="btnbar"><button class="btn primary" data-close="1">OK</button></div>`)}else{modal(`<h3>✅ Safe in this case</h3><p>This link goes to the expected domain. Good habit: even then, prefer your own bookmark for anything sensitive.</p><div class="btnbar"><button class="btn primary" data-close="1">OK</button></div>`)}if(state.answers[e.id])open(e.id)}
+}
+function attInspector(i){
+  const e=emails.find(x=>x.id===state.sel),t=e.atts[i],bits=t.name.split('.'),ext=bits.pop().toLowerCase(),shown=bits.join('.');
+  const danger=['exe','xlsm','docm','scr','js'].includes(ext),dbl=bits.length>1&&['pdf','doc','docx','xls','xlsx','jpg','png','txt'].includes(bits[bits.length-1].toLowerCase());
+  const m=modal(`<h3>📎 Attachment inspector</h3>
+   <div class="kv"><div>Full filename</div><div class="mono">${esc(shown)}.<mark class="nx">${esc(ext)}</mark></div>
+   <div>Final extension</div><div class="mono"><b>.${esc(ext)}</b></div><div>File type</div><div>${ftype[ext]||'Unknown type'}</div><div>Size</div><div>${t.size}</div>
+   <div>Shown by Windows*</div><div class="mono">${dbl?esc(shown):esc(t.name)}</div></div>
+   <div class="note info">*Windows hides “known” extensions by default, so a double extension like <span class="mono">.pdf.exe</span> can appear as just <span class="mono">.pdf</span>. Always read the <b>last</b> extension.</div>
+   <div class="btnbar"><button class="btn" data-close="1">Close – don't open</button><button class="btn danger" id="go">Open anyway (simulated)</button></div>`);
+  m.querySelector('#go').onclick=()=>{m.remove();
+    if(e.attack==='ransomware'){state.risky[e.id]='enabled macro in attachment';ransomware(e)}
+    else if(e.attack==='exe'){state.risky[e.id]='ran executable';modal(`<h3>⚠️ Simulation: malware executed</h3><p>You just ran a program disguised as an invoice. In a real attack it could install a remote-access trojan or info-stealer. <b>Nothing ran here.</b></p><p>Next steps in real life: disconnect from the network, tell IT/security immediately, and don't try to “clean it up” quietly.</p><div class="btnbar"><button class="btn primary" data-close="1">OK</button></div>`)}
+    else modal(`<h3>✅ Opened safely</h3><p>A plain calendar file from a verified internal sender is low-risk.</p><div class="btnbar"><button class="btn primary" data-close="1">OK</button></div>`);
+    if(state.answers[e.id])open(e.id)}
+}
+function senderInspector(){
+  const e=emails.find(x=>x.id===state.sel),dom=e.addr.split('@')[1],nx=nonAscii(e.addr);
+  modal(`<h3>🔍 Sender analysis</h3><div class="kv"><div>Display name</div><div>${esc(e.from)}</div><div>Actual address</div><div class="mono">${hl(e.addr)}</div>
+   <div>Sender domain</div><div class="mono dom">${hl(dom)}</div><div>Reply-To</div><div class="mono">${esc(e.replyto||e.addr)}</div><div>Return-Path</div><div class="mono">${hl(e.ret)}</div></div>
+   ${nx.length?`<div class="note warn">Non-ASCII characters in address: ${nx.join(', ')} (highlighted in yellow).</div>`:`<div class="note info">All characters in the address are plain ASCII. Lookalikes can still use plain letters (e.g. “1” for “l”, “rn” for “m”).</div>`}
+   <div class="note info"><b>Compare:</b> your company domain is <span class="mono">brightfield.com</span>. Read the domain letter by letter.</div>
+   <div class="btnbar"><button class="btn primary" data-close="1">Close</button></div>`);
+}
+
+/* ---------- ransomware simulation (visual only) ---------- */
+function ransomware(e){
+  const r=document.createElement('div');r.id='ransom';
+  r.innerHTML=`<div class="sim">⚠ SIMULATION – NO FILES WERE ENCRYPTED OR MODIFIED. This screen is a safe training demo. ⚠</div>
+  <div class="in"><h1>☠ YOUR FILES HAVE BEEN ENCRYPTED</h1>
+  <p>All documents, photos and databases on this computer are now locked. To recover them you must pay in cryptocurrency within the time limit.</p>
+  <div class="timer" id="rt">71:59:59</div>
+  <div class="files" id="rf"></div>
+  <p style="margin-top:14px">Payment address: <b>SIMULATION-NOT-A-REAL-ADDRESS</b></p>
+  <p style="color:#ff9b9b">Notice the pressure tactics: a countdown, threats of permanent loss, and the claim that only the attacker can help.</p>
+  <button class="btn primary" id="rend">End simulation and see debrief</button><div id="rdeb"></div></div>`;
+  document.body.appendChild(r);
+  const names=["Q4_Budget.xlsx","Board_Minutes.docx","Payroll_2026.csv","Family_Photos/IMG_0042.jpg","Contracts/Kestrel_MSA.pdf","Customer_DB.sqlite","Passwords.txt","Thesis_Final.docx","Invoices_2026.zip","Backup_Notes.md"];
+  let i=0,f=$('#rf'),iv=setInterval(()=>{if(i<names.length){f.innerHTML+=`${names[i++]} → <b>${names[i-1]}.locked</b><br>`;f.scrollTop=1e9}},350);
+  let sec=72*3600-1,tv=setInterval(()=>{sec--;const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;$('#rt').textContent=[h,m,s].map(n=>String(n).padStart(2,'0')).join(':')},1000);
+  $('#rend').onclick=()=>{clearInterval(iv);clearInterval(tv);$('#rend').style.display='none';
+    $('#rdeb').innerHTML=`<div class="debrief"><h2>Debrief: what just happened</h2>
+    <p>You opened a macro-enabled spreadsheet from a lookalike payroll domain and “enabled content”. In a real attack, that macro downloads and runs the ransomware.</p>
+    <h3>If this happens for real</h3><ol><li><b>Disconnect</b> the device from Wi-Fi and network cables immediately. Don't power off if IT asks you to keep it on.</li><li><b>Report</b> it to IT/security right away, even if you're embarrassed. Speed limits the damage.</li><li><b>Don't pay</b> or contact the attackers; payment doesn't guarantee recovery and funds crime.</li><li><b>Restore</b> from clean, offline backups after IT has cleaned the machine.</li><li><b>Change passwords</b> from a different, clean device.</li></ol>
+    <h3>How to prevent it</h3><ul><li>Treat unexpected attachments, especially .xlsm/.docm/.exe, as hostile.</li><li>Never click “Enable Content/Editing” because an email told you to.</li><li>Check the sender’s <i>domain</i>, not the name.</li><li>Keep offline backups and apply updates.</li></ul>
+    <button class="btn primary" id="rclose">Back to inbox</button></div>`;
+    $('#rclose').onclick=()=>{r.remove();open(e.id)}}
+}
+
+/* ---------- results & learn ---------- */
+function results(){
+  const a=state.answers,done=Object.keys(a).length,ok=Object.values(a).filter(x=>x.right).length;
+  const fn=emails.filter(e=>e.phish&&a[e.id]&&!a[e.id].right).length,fp=emails.filter(e=>!e.phish&&a[e.id]&&!a[e.id].right).length;
+  const risky=Object.keys(state.risky).length;
+  const missed=emails.filter(e=>a[e.id]&&!a[e.id].right).map(e=>`<li>${esc(e.tech)} – “${esc(e.subject)}”</li>`).join('');
+  const pct=done?Math.round(ok/done*100):0;
+  const plainMissed=emails.filter(e=>a[e.id]&&!a[e.id].right).map(e=>`- ${e.tech}: ${e.subject}`).join('\n');
+  const summary=`Esther Natufe's Phish Lab results\nScore: ${ok}/${done} (${pct}%)\nPhishing missed: ${fn}\nLegitimate emails wrongly flagged: ${fp}\nDangerous opens (links/attachments): ${risky}\n`+(plainMissed?`\nTo review:\n${plainMissed}\n`:'\nNothing missed!\n')+`\nTry it: ${location.href.split('#')[0]}`;
+  const m=modal(`<h3>📊 Your results</h3><p style="font-size:28px;margin:6px 0"><b>${ok}/${done}</b> correct (${pct}%)</p>
+   <div class="kv"><div>Phishing missed</div><div>${fn}</div><div>Legit flagged as phishing</div><div>${fp}</div><div>Dangerous opens</div><div>${risky}</div></div>
+   ${missed?`<b>Review these:</b><ul>${missed}</ul>`:done===emails.length?'<p>🎉 Perfect – nothing missed.</p>':''}
+   <div class="note info">Being cautious about legitimate mail is far less costly than missing a phish. But the goal is calibrated judgment: verify, don't panic.</div>
+   <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+   <b>Save your results</b>
+   <div class="row" style="margin-top:6px"><input id="rTo" type="email" placeholder="your email address" value="${esc(ORGANIZER_EMAIL)}" style="flex:1;min-width:200px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit"></div>
+   <div class="btnbar"><button class="btn primary" id="rMail">✉️ Email my results</button><button class="btn" id="rCopy">📋 Copy results</button></div>
+   <p class="dim" style="font-size:13px;margin:8px 0 0">This opens a draft in your own email app. Nothing is sent or stored by this site.</p>
+   <div class="btnbar"><button class="btn" data-close="1">Close</button><button class="btn" onclick="location.reload()">Play again</button></div>`);
+  m.querySelector('#rMail').onclick=()=>{const to=m.querySelector('#rTo').value.trim();
+    location.href='mailto:'+to+'?subject='+encodeURIComponent(`My Phish Lab results: ${ok}/${done}`)+'&body='+encodeURIComponent(summary)};
+  m.querySelector('#rCopy').onclick=async()=>{const b=m.querySelector('#rCopy');
+    try{await navigator.clipboard.writeText(summary);b.textContent='✅ Copied'}catch{b.textContent='Copy failed – select manually'}};
+}
+const lessons=[
+ ["Check the actual sender address","The display name is free text. Look at the address and compare the domain letter by letter with the real one."],
+ ["Homoglyphs & lookalikes","Cyrillic “а” for Latin “a”, “1” for “l”, “rn” for “m”, “lnc” for “inc”. Use the Inspect tool, and type addresses yourself."],
+ ["Typosquatting: the lookalike family","Missing letter (zentrabnk), transposed (cloudvualt), doubled (parceloo), wrong ending (lumenhr.<b>net</b> vs .com), extra words (parcelo-express), swapped characters (brightfie<b>1</b>d, paystream-<b>lnc</b>) and invisible swaps (Cyrillic “а”). Slow down and read domains letter by letter, or better, don’t click and go via a bookmark."],
+ ["Read the link domain right to left","The real domain is just before the first single “/”. In cloudvault.com.evil.net the owner is evil.net."],
+ ["AI-powered phishing","Perfect grammar, correct names and project context are cheap to generate. Judge the <i>request and domain</i>, not the writing quality."],
+ ["Attachments: read the last extension","invoice.pdf.exe is a program. Treat .exe, .scr, .js, .iso, and macro files (.xlsm/.docm) as dangerous unless you verified them."],
+ ["Never “Enable Content” on request","Macros are how a lot of ransomware starts. A document that demands them to be readable is a red flag."],
+ ["Business email compromise","Urgency + secrecy + authority + payment. Verify by phone on a known number, and check the Reply-To header."],
+ ["Thread hijacking","Attackers join real conversations or reuse them. Compare each address in the quoted thread against the new sender."],
+ ["QR-code phishing","You can’t read a QR code’s destination by eye. Be wary of any QR code in email, especially for login or MFA."],
+ ["Authentication ≠ trust","SPF/DKIM/DMARC pass only means the domain sending is authentic. Attackers register their own lookalike domains with perfect setup."],
+ ["If in doubt, verify out-of-band","Call, message on a known channel, or use your bookmark. Never use contact details from the suspicious email."],
+ ["Report, don't hide","If you clicked, report right away. Quick reports contain incidents; hiding them lets them spread."]
+];
+$('#learn').innerHTML=lessons.map(l=>`<div class="card"><h3>${l[0]}</h3><p>${l[1]}</p></div>`).join('');
+
+/* ---------- events ---------- */
+$('#list').addEventListener('click',ev=>{const it=ev.target.closest('.item');if(it)open(+it.dataset.id)});
+$('#read').addEventListener('click',ev=>{
+  const t=ev.target;
+  if(t.closest('a.lnk')){ev.preventDefault();linkInspector(t.closest('a.lnk').dataset.url)}
+  else if(t.closest('.att'))attInspector(+t.closest('.att').dataset.att);
+  else if(t.closest('.qr'))linkInspector(emails.find(x=>x.id===state.sel).qr,true);
+  else if(t.id==='bSender')senderInspector();
+  else if(t.id==='bHdr')$('#hdrs').classList.toggle('open');
+  else if(t.id==='bPhish')answer(state.sel,true);
+  else if(t.id==='bSafe')answer(state.sel,false);
+});
+$('#read').addEventListener('mouseover',ev=>{const a=ev.target.closest('a.lnk');if(a){$('#status').textContent=a.dataset.url;$('#status').style.display='block'}});
+$('#read').addEventListener('mouseout',ev=>{if(ev.target.closest('a.lnk'))$('#status').style.display='none'});
+$('#tInbox').onclick=()=>{$('#mainInbox').style.display='flex';$('#mainLearn').style.display='none';$('#tInbox').classList.add('on');$('#tLearn').classList.remove('on')};
+$('#tLearn').onclick=()=>{$('#mainInbox').style.display='none';$('#mainLearn').style.display='block';$('#tLearn').classList.add('on');$('#tInbox').classList.remove('on')};
+$('#bResults').onclick=results;$('#bReset').onclick=()=>location.reload();
+renderList();
+</script>
+</body>
+</html>
