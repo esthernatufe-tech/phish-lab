@@ -27,10 +27,6 @@ At the end, players can enter their address and click **Email my results**, whic
 ## Safety
 Everything is fictional and runs locally in the browser. No emails are sent, no data is collected, no real files are touched, and the "ransomware" screen is just an animated overlay with a clear SIMULATION banner. All brands (Zentra Bank, Cloudvault, Parcelo, Lumen HR, Paystream, Brightfield) are made up. Please keep it that way: do not swap in real company names or logos.
 
-## Deploy on GitHub Pages
-1. Create a repo and add `index.html` and `README.md`.
-2. Go to **Settings → Pages**, choose **Deploy from a branch**, select `main` and `/ (root)`, then Save.
-3. Your site will be live at `https://<username>.github.io/<repo>/` within a minute or two.
 
 ## Add or edit emails
 Edit the `emails` array near the top of the script in `index.html`. Each entry has: `from`, `addr`, `ret` (Return-Path), optional `replyto`, `subject`, `body` (HTML; use `L(url, text)` for links), optional `atts` (attachments) and `qr`, `phish` (true/false), `tech`, and `flags` (the lesson shown after the player answers).
